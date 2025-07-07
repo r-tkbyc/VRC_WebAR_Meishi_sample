@@ -282,40 +282,33 @@
     const video = document.getElementById('loadingVideo');
     const modal = document.getElementById('loadingModal');
 
-    // 進捗同期関数（0〜1）
     function setLoadingProgress(progress) {
       if (video.readyState >= 1 && video.duration) {
         video.currentTime = progress * video.duration;
       }
     }
 
-    // フェードアウト
     function hideLoadingModal() {
       modal.classList.add('fade-out');
       setTimeout(() => modal.style.display = 'none', 800);
     }
 
-    // 動画初期化
     video.addEventListener('loadedmetadata', () => {
       video.currentTime = 0;
       video.pause();
       setLoadingProgress(0);
     });
 
-    // 「再生開始」を検知
     video.addEventListener('play', () => {
-      // 必ず5秒後にローディングを消す（この5秒は動画の長さに合わせる）
       setTimeout(hideLoadingModal, 5000);
     });
 
-    // GLTFロードが終わったら動画再生開始
     function onModelLoaded() {
-      if (video.readyState >= 2) { // HAVE_CURRENT_DATA以上
+      if (video.readyState >= 2) {
         video.currentTime = 0;
         video.muted = true;
         video.play();
       } else {
-        // 動画の読み込みが遅れている場合も考慮
         video.addEventListener('canplay', function handler() {
           video.removeEventListener('canplay', handler);
           video.currentTime = 0;
@@ -338,12 +331,31 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.outputEncoding = THREE.sRGBEncoding;
 
-        const light = new THREE.AmbientLight(0xffffff, 1.0);
+        // === シャドウ有効化 ===
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // === ライト ===
+        const light = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(light);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        directionalLight.position.set(0, 1, 1);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.1);
+        directionalLight.position.set(0, 3, 3);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 10;
         scene.add(directionalLight);
+
+        // === 地面（影受け用・固定） ===
+        const groundGeometry = new THREE.PlaneGeometry(3, 3);
+        const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.4 });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = 0; // Y=0で固定
+        ground.receiveShadow = true;
+        scene.add(ground);
 
         const anchor = mindarThree.addAnchor(0);
         const scanningUI = document.getElementById('scanning');
@@ -359,14 +371,12 @@
 
         // モデル切り替え
         function loadAvatarModel(glbPath) {
-          // 既存モデルを即座に消す
           if (currentModel && anchor.group.children.includes(currentModel)) {
             anchor.group.remove(currentModel);
             currentModel = null;
             window.sceneObj = null;
           }
 
-          // ローディング案内を表示
           document.getElementById('modelLoadingNotice').style.display = 'block';
 
           loader.load(
@@ -376,6 +386,14 @@
               model.position.set(0, 0, 0);
               model.rotation.set(Math.PI * 0.5, Math.PI * 0, Math.PI * 0);
               model.scale.set(0.5, 0.5, 0.5);
+
+              // === 影を落とす設定 ===
+              model.traverse((obj) => {
+                if (obj.isMesh) {
+                  obj.castShadow = true;
+                }
+              });
+
               anchor.group.add(model);
               currentModel = model;
               window.sceneObj = model;
@@ -390,10 +408,7 @@
                 mixer = null;
               }
 
-              // ローディング案内を消す
               document.getElementById('modelLoadingNotice').style.display = 'none';
-
-              // 初回ロード時の処理
               onModelLoaded();
             },
             (xhr) => {
@@ -417,17 +432,13 @@
         document.querySelector('.seg2').addEventListener('pointerdown', () => {
           loadAvatarModel('./assets/models/AvatarModel2.glb');
         });
-        // seg3タップ時の動作変更
         document.querySelector('.seg3').addEventListener('pointerdown', () => {
           document.getElementById('snsModal').classList.add('active');
         });
-        // 「はい」ボタン
         document.getElementById('snsYes').addEventListener('click', () => {
-          window.open('https://x.com/vrchat_jp', '_blank'); // 新しいタブで開く
-          // location.href = 'https://x.com/r_tkbyc'; // 同じタブで遷移したい場合はこちら
+          window.open('https://x.com/vrchat_jp', '_blank');
           document.getElementById('snsModal').classList.remove('active');
         });
-        // 「いいえ」ボタン
         document.getElementById('snsNo').addEventListener('click', () => {
           document.getElementById('snsModal').classList.remove('active');
         });
@@ -495,7 +506,6 @@
         await mindarThree.start();
         scanningUI.style.display = 'block';
 
-        // アニメーション用mixerの更新も追加
         renderer.setAnimationLoop(() => {
           if (mixer) mixer.update(clock.getDelta());
           renderer.render(scene, camera);
@@ -511,5 +521,6 @@
       }
     });
   </script>
+
 </body>
 </html>
