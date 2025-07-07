@@ -226,7 +226,7 @@
   </style>
 </head>
 <body>
-  <p style="position: fixed; top: 10px; left: 10px; z-index: 1000; color: white;">Ver.1.0.0</p>
+  <p style="position: fixed; top: 10px; left: 10px; z-index: 1000; color: white;">Ver.1.0.1</p>
 
   <!-- ローディングモーダル -->
   <div class="loading-modal" id="loadingModal">
@@ -336,24 +336,22 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         // === ライト ===
-        const light = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(light);
-
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.1);
-        directionalLight.position.set(0, 3, 3);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        directionalLight.position.set(0, 5, 2); // 高め＆斜め
         directionalLight.castShadow = true;
-        directionalLight.shadow.mapSize.width = 1024;
-        directionalLight.shadow.mapSize.height = 1024;
-        directionalLight.shadow.camera.near = 0.5;
-        directionalLight.shadow.camera.far = 10;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
         scene.add(directionalLight);
 
-        // === 地面（影受け用・固定） ===
-        const groundGeometry = new THREE.PlaneGeometry(3, 3);
-        const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.4 });
+        const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambient);
+
+        // === 地面 ===
+        const groundGeometry = new THREE.PlaneGeometry(5, 5);
+        const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.7 }); // 濃いめ
         const ground = new THREE.Mesh(groundGeometry, groundMaterial);
         ground.rotation.x = -Math.PI / 2;
-        ground.position.y = 0; // Y=0で固定
+        ground.position.y = 0;
         ground.receiveShadow = true;
         scene.add(ground);
 
