@@ -226,7 +226,7 @@
   </style>
 </head>
 <body>
-  
+  <p style="position: fixed; top: 10px; left: 10px; z-index: 1000; color: white;">Ver.1.0.0</p>
 
   <!-- ローディングモーダル -->
   <div class="loading-modal" id="loadingModal">
@@ -374,7 +374,7 @@
             (gltf) => {
               const model = gltf.scene;
               model.position.set(0, 0, 0);
-              model.rotation.set(Math.PI * 0.5, Math.PI * -0.5, Math.PI * 0);
+              model.rotation.set(Math.PI * 0.5, Math.PI * 0, Math.PI * 0);
               model.scale.set(0.5, 0.5, 0.5);
               anchor.group.add(model);
               currentModel = model;
@@ -423,7 +423,7 @@
         });
         // 「はい」ボタン
         document.getElementById('snsYes').addEventListener('click', () => {
-          window.open('https://x.com/r_tkbyc', '_blank'); // 新しいタブで開く
+          window.open('https://x.com/vrchat_jp', '_blank'); // 新しいタブで開く
           // location.href = 'https://x.com/r_tkbyc'; // 同じタブで遷移したい場合はこちら
           document.getElementById('snsModal').classList.remove('active');
         });
